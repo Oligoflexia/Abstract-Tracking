@@ -1,17 +1,5 @@
-import sqlite3
+import pandas as pd
 
-class DBConnection:
-    def __init__(self, db_path):
-        self.db_path = db_path
-        self.connection = None
-        
-    def get_connection(self):
-        if self.connection is None:
-            self.connection = sqlite3.connect(self.db_path)
-        return self.connection
-    
-    def close_connection(self):
-        if self.connection is not None:
-            self.connection.close()
-            self.connection = None
-
+def populate_from_csv(csv_path:str, table_name:str):
+    df = pd.read_csv(csv_path)
+    pass

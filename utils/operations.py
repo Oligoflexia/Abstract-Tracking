@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import logging
+import pandas as pd
 
 # Create operations
 def create_db_from_schema(db_path:str, schema_path:str) -> int:
@@ -48,16 +49,53 @@ def create_db_from_schema(db_path:str, schema_path:str) -> int:
         conn.close()
         return 1
 
-def populate_from_csv(csv_path:str, table_name:str):
+def add_record(conn:sqlite3.Connection, data_dict:dict, table_name:str) -> int:
+    cursor = conn.cursor()
+    
+    columns = ', '.join(data_dict.keys())
+    placeholders = ':' + ', :'.join(data_dict.keys())
+    
+    sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+    cursor.execute(sql, data_dict)
+    
+    conn.commit()
+    cursor.close()
+    
+def add_abstract_records(csv_records:pd.DataFrame) -> int:
+    columns = ['internal_ID', 'title', 'section', 'status', 'result', 'first_author', 'submitter_ID', 'presentation_day', 'presentation_time']
+    
     pass
 
-def add_abstract_records(csv_records:list[dict]) -> int:
-    pass
-
+def add_people_records(conn:sqlite3.Connection, csv_records:pd.DataFrame) -> int:
+    csv_records.columns = ['first_name', 'last_name', 'prefix', 'role']
+    dict_list = csv_records.to_dict()
+    
+    for dic in dict_list:
+        params = {'first_name': dic['first_name'], 'last_name': dic['last_name']}
+        if not record_exists(conn, 'People', params):
+            try:
+                add_record(conn, dic, 'People')
+                logging.info("Record with name %s %s added!", dic['first_name'], dic['last_name'])
+            except sqlite3.Error as e:
+                logging.error("Ran into an error adding record %s %s: %s", dic['first_name'], dic['last_name'], e)
+        else:
+            logging.error("Record with name %s %s already exists!", dic['first_name'], dic['last_name'])
+            
 # Read operations
+def record_exists(conn:sqlite3.Connection, table_name:str, **query_params) -> bool:
+    cursor = conn.cursor()
+    
+    where_clause = ' AND '.join([f"{key} = ?" for key in query_params])
+    select_query = f"SELECT 1 FROM {table_name} WHERE {where_clause} LIMIT 1"
+    
+    cursor.execute(select_query, tuple(query_params.values()))
+    exists = cursor.fetchone()
+    
+    cursor.close()
+    
+    return exists is not None
 
-
-# Update operastion
+# Update operations
 
 
 # Delete operations
