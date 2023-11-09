@@ -131,5 +131,23 @@ def drop_all_tables(conn:sqlite3.Connection, db_name:str) -> int:
 def drop_table(conn:sqlite3.Connection, table_name:str, db_name:str) -> int:
     pass
 
+def drop_table_records(conn:sqlite3.Connection, table_name:str) -> int:
+    logging.warning("You're about to delete all records in: %s", table_name)
+    logging.warning("Press the Y key and Enter to confirm. Any other key will cancel.")
+    
+    response = input("Input [Y] ?: ")
+    
+    if response.upper() == 'Y':
+        cursor = conn.cursor()
+        cursor.execute(f"DELETE FROM {table_name}")
+        conn.commit()
+        logging.info("A total of %s rows were deletde from %s", cursor.rowcount, table_name)
+        cursor.close()
+        return 1
+    else:
+        logging.info("exiting")
+    
+    
+
 def drop_record(conn:sqlite3.Connection, table_name:str, db_name:str, sql:str) -> int:
     pass
