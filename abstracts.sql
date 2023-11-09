@@ -24,8 +24,8 @@ CREATE TABLE Attended (
 CREATE TABLE Abstract (
     abstract_ID INTEGER PRIMARY KEY,
     internal_ID INTEGER,
-    title,
-    section,
+    title TEXT,
+    section TEXT,
     status TEXT CHECK (status IN ('Submitted', 'Draft', 'Draft Collection', 'Draft Analysis')),
     result TEXT,
     first_author INTEGER,
