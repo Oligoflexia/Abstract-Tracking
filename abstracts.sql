@@ -7,9 +7,12 @@ CREATE TABLE Conference (
     organization TEXT
 );
 
+-- Think about a UNIQUE constraint on the name
 CREATE TABLE People (
     person_ID INTEGER PRIMARY KEY,
-    name TEXT, 
+    first_name TEXT,
+    last_name TEXT,
+    prefix TEXT, 
     role TEXT
 );
 
