@@ -2,8 +2,10 @@ import os
 import sqlite3
 import logging
 import pandas as pd
+from utils.helpers import format_authors, expand_df, map_cols_to_pkey
 
 # Create operations
+
 def create_db_from_schema(db_path:str, schema_path:str) -> int:
     '''
     Creates an SQLite3 database from an SQL file containing the schema 
@@ -49,6 +51,7 @@ def create_db_from_schema(db_path:str, schema_path:str) -> int:
         conn.close()
         return 1
 
+
 def add_record(conn:sqlite3.Connection, data_dict:dict, table_name:str) -> int:
     cursor = conn.cursor()
     
@@ -60,14 +63,45 @@ def add_record(conn:sqlite3.Connection, data_dict:dict, table_name:str) -> int:
     
     conn.commit()
     cursor.close()
-    
-def add_abstract_records(csv_records:pd.DataFrame) -> int:
-    columns = ['internal_ID', 'title', 'section', 'status', 'result', 'first_author', 'submitter_ID', 'presentation_day', 'presentation_time']
+
+
+def add_abstract_records(conn:sqlite3.Connection, csv_records:pd.DataFrame) -> int:
+    columns = ['internal_ID', 'title', 'section', 'status', 'submitter_ID', 'result', 'presentation_day', 'presentation_time']
     csv_records['Abstract ID'] = pd.to_numeric(csv_records['Abstract ID'], errors='coerce')
     csv_records['Abstract ID'] = csv_records['Abstract ID'].fillna(0).astype(int)
     
+    names = format_authors(csv_records)
+    add_people_records(conn, names)
     
-    pass
+    authors = csv_records.iloc[:, [0, 2]]
+    authors.columns = ['a_id', 'Authors']
+    csv_records.drop(columns=['Authors'], inplace= True) 
+    
+    person_key_data = get_pkeys_for_values(conn, 'People', 'person_ID', 'first_name')
+    csv_records.columns = columns
+    csv_records['submitter_ID'] = csv_records.apply(map_cols_to_pkey, axis=1, mapping=person_key_data, column_names=['submitter_ID'])
+    
+    dict_list = csv_records.to_dict('records')
+    
+    for dic in dict_list:
+        params = {'title': dic['title'], 'presentation_day': dic['presentation_day']}
+        if not record_exists(conn, 'Abstract', query_params=params):
+            try:
+                add_record(conn, dic, 'Abstract')
+                logging.info("Abstract with title %s added!", dic['title'])
+            except sqlite3.Error as e:
+                logging.error("Ran into an error adding abstract: %s for: %s: %s", dic['title'], dic['presentation_day'], e)
+        else:
+            logging.error("Abstract with name: %s at time: %s already exists!", dic['title'], dic['presentation_day'])
+    
+    person_key_data = get_pkeys_for_values(conn, 'People', 'person_ID', 'first_name', 'last_name')
+    abstract_key_data = get_pkeys_for_values(conn, 'Abstract', 'abstract_ID', 'internal_ID')
+    
+    authors = expand_df(authors)
+    authors['p_id'] = authors.apply(map_cols_to_pkey, axis=1, mapping=person_key_data, column_names=['first_name', 'last_name'])
+    authors.drop(['first_name', 'last_name'], axis=1, inplace=True)
+    authors['a_id'] = authors.apply(map_cols_to_pkey, axis=1, mapping=abstract_key_data, column_names=['a_id'])
+    add_authors_records(conn, authors)
 
 def add_people_records(conn:sqlite3.Connection, csv_records:pd.DataFrame) -> int:
     csv_records.columns = ['first_name', 'last_name', 'prefix', 'role']
@@ -84,6 +118,21 @@ def add_people_records(conn:sqlite3.Connection, csv_records:pd.DataFrame) -> int
         else:
             logging.error("Record with name %s %s already exists!", dic['first_name'], dic['last_name'])
 
+def add_authors_records(conn:sqlite3.Connection, csv_records:pd.DataFrame) -> int:
+    csv_records.columns = ['a_id','p_id']
+    dict_list = csv_records.to_dict('records')
+    
+    for dic in dict_list:
+        params = {'p_id': dic['p_id'], 'a_id': dic['a_id']}
+        if not record_exists(conn, 'Authors', query_params=params):
+            try:
+                add_record(conn, dic, 'Authors')
+                logging.info("Record with p_id: %s, a_id: %s added!", dic['p_id'], dic['a_id'])
+            except sqlite3.Error as e:
+                logging.error("Ran into an error adding p_id: %s, a_id: %s: %s", dic['p_id'], dic['a_id'], e)
+        else:
+            logging.error("Record with p_id: %s, a_id: %s already exists!", dic['p_id'], dic['a_id'])
+
 # Read operations
 def record_exists(conn:sqlite3.Connection, table_name:str, query_params) -> bool:
     cursor = conn.cursor()
@@ -91,14 +140,24 @@ def record_exists(conn:sqlite3.Connection, table_name:str, query_params) -> bool
     where_clause = ' AND '.join([f"{key} = ?" for key in query_params])
     select_query = f"SELECT 1 FROM {table_name} WHERE {where_clause} LIMIT 1"
     
-    print("SQL Query:", select_query)
-    
     cursor.execute(select_query, tuple(query_params.values()))
     exists = cursor.fetchone()
     
     cursor.close()
     
     return exists is not None
+
+def get_pkeys_for_values(conn: sqlite3.Connection, query_table: str, key_id: str, *replacement_columns: str) -> dict:
+    cursor = conn.cursor()
+    
+    columns = ', '.join(replacement_columns)
+    query = f"SELECT {key_id}, {columns} FROM {query_table}"
+    
+    cursor.execute(query)
+    data = cursor.fetchall()
+    cursor.close()
+
+    return {tuple(row[1:]): row[0] for row in data}
 
 # Update operations
 
