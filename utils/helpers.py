@@ -1,4 +1,5 @@
 import pandas as pd
+from utils import db_operations
 
 def populate_from_csv(csv_path:str, table_name:str):
     df = pd.read_csv(csv_path)
@@ -23,7 +24,7 @@ def format_authors(df):
     
     return names
 
-def expand_df(df: pd.DataFrame) -> pd.DataFrame:
+def expand_authors_df(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df['Authors'] = df['Authors'].apply(lambda x: [name.strip() for name in x.split(',')])
 
@@ -46,3 +47,34 @@ def expand_df(df: pd.DataFrame) -> pd.DataFrame:
 def map_cols_to_pkey(row, mapping, column_names):
     value_tuple = tuple(row[col] for col in column_names)
     return mapping.get(value_tuple)
+
+# TODO: Format dates into YYYY-MM-DD
+def abstract_handling(conn, df:pd.DataFrame):
+    columns = ['internal_ID', 'title', 'section', 'status', 'submitter_ID', 'result', 'presentation_day', 'presentation_time']
+    df['Abstract ID'] = pd.to_numeric(df['Abstract ID'], errors='coerce')
+    df['Abstract ID'] = df['Abstract ID'].fillna(0).astype(int)
+    
+
+    
+    df.drop(columns=['Authors'], inplace= True) 
+    
+    person_key_data = db_operations.get_pkeys_for_values(conn, 'People', 'person_ID', 'first_name')
+    df.columns = columns
+    df['submitter_ID'] = df.apply(map_cols_to_pkey, axis=1, mapping=person_key_data, column_names=['submitter_ID'])
+    
+    dict_list = df.to_dict('records')
+    return dict_list
+
+def authors_handling(conn, df:pd.DataFrame):
+    authors = df.iloc[:, [0, 2]]
+    authors.columns = ['a_id', 'Authors']
+    authors = expand_authors_df(authors)
+    
+    person_key_data = db_operations.get_pkeys_for_values(conn, 'People', 'person_ID', 'first_name', 'last_name')
+    abstract_key_data = db_operations.get_pkeys_for_values(conn, 'Abstract', 'abstract_ID', 'internal_ID')
+    
+    authors['p_id'] = authors.apply(map_cols_to_pkey, axis=1, mapping=person_key_data, column_names=['first_name', 'last_name'])
+    authors.drop(['first_name', 'last_name'], axis=1, inplace=True)
+    authors['a_id'] = authors.apply(map_cols_to_pkey, axis=1, mapping=abstract_key_data, column_names=['a_id'])
+    
+    return authors
