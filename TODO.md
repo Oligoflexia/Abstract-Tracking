@@ -7,4 +7,6 @@ TO-DO:
 - [ ] support SQL commands that don't return a table
 - [ ] backups
 - [ ] deployment (Docker?)
-- 
+- [ ] GUI buttons for functions
+- [ ] robust checking for csv entry
+- [ ] unique condition for names with no last name
