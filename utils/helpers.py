@@ -1,15 +1,34 @@
 import pandas as pd
+from sqlite3 import Connection
 from utils import db_operations
 
-def populate_from_csv(conn, csv_path:str):
+# TODO: Docstring, conference record
+def populate_from_csv(conn:Connection, csv_path:str) -> None:
     """
+    Populates a given database with records from a CSV file.
+    Handles replacements in columns with foreign key constraints 
+    automatically.
+    Expects proper formatting in the CSV file:
+        - TODO
+    
+        Parameters:
+            - conn (Connection object): a SQLite3 connection object.
+            - csv_path (str): path to a CSV containing data (in 'data/')
+        
+        Returns:
+            - None
+        
+        Modifies:
+            - Currently connected database.
     """
+
     df = pd.read_csv(csv_path)
     columns = ['internal_ID', 'title', 'authors', 'section', 'status', 'submitter_ID',
                'result', 'presentation_day', 'presentation_time']
     
     df.columns = columns
     
+    # convert all abstract IDs to integer values and fill in missing values with 0
     df['internal_ID'] = pd.to_numeric(df['internal_ID'], errors='coerce')
     df['internal_ID'] = df['internal_ID'].fillna(0).astype(int)
     
@@ -32,13 +51,21 @@ def populate_from_csv(conn, csv_path:str):
             first_authors_dicts.append({'first_name': flname[0], 'last_name': flname[1]})
     
     first_authors = pd.DataFrame(first_authors_dicts, columns=['first_name', 'last_name'])
-    person_key_data = db_operations.get_pkeys_for_values(conn, 'People', 'person_ID', 'first_name', 'last_name')
-    first_authors['first_author'] = first_authors.apply(map_cols_to_pkey, axis=1, mapping=person_key_data, column_names=['first_name', 'last_name'])
+    person_key_data = db_operations.get_pkeys_for_values(conn, 
+                                                         'People', 'person_ID', 
+                                                         'first_name', 'last_name')
+    first_authors['first_author'] = first_authors.apply(map_cols_to_pkey, axis=1, 
+                                                        mapping=person_key_data, 
+                                                        column_names=['first_name', 
+                                                                      'last_name'])
     first_authors.drop(['first_name', 'last_name'], axis=1, inplace=True)
     df['first_author'] = first_authors
     
-    person_key_data = db_operations.get_pkeys_for_values(conn, 'People', 'person_ID', 'first_name')
-    df['submitter_ID'] = df.apply(map_cols_to_pkey, axis=1, mapping=person_key_data, column_names=['submitter_ID'])
+    person_key_data = db_operations.get_pkeys_for_values(conn, 
+                                                         'People', 'person_ID', 
+                                                         'first_name')
+    df['submitter_ID'] = df.apply(map_cols_to_pkey, axis=1, 
+                                  mapping=person_key_data, column_names=['submitter_ID'])
     
     # Make sure that the date is converted properly
     df['presentation_day'] = pd.to_datetime(df['presentation_day'], errors='coerce')
@@ -54,14 +81,24 @@ def populate_from_csv(conn, csv_path:str):
     authors = authors_handling(conn, authors)
     db_operations.add_authors_records(conn, authors)
 
-
-
-def format_authors(df):
+def format_authors(df:pd.DataFrame) -> pd.DataFrame:
     """
+    Takes a DataFrame with an 'authors' column containing a list of
+    strings saved as a single string and returns a DataFrame with the
+    columns: 0:first_name 1:last_name 3:prefix 4:role where every unique
+    name is represented
+    
+        Parameters:
+            - df (DataFrame): a DataFrame containing 'authors' column
+        
+        Returns:
+            - (DataFrame) with all unique names in df and 4 columns
+        
+        Modifies:
+            - None
     """
+    
     def grab_names(row):
-        """
-        """
         names = row['authors'].split(', ')
         name_tuple_list = [(name.split(" ")[0].strip(), name.split(" ")[1].strip()) 
                            for name in names if len(name.split(" ")) == 2]
@@ -83,6 +120,7 @@ def format_authors(df):
     
     return names
 
+# TODO: Docstring
 def expand_authors_df(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df['authors'] = df['authors'].apply(lambda x: [name.strip() for name in x.split(',')])
@@ -102,11 +140,13 @@ def expand_authors_df(df: pd.DataFrame) -> pd.DataFrame:
     expanded.drop('authors', axis=1, inplace=True)
     
     return expanded
-    
+
+# TODO: docstring 
 def map_cols_to_pkey(row, mapping, column_names):
     value_tuple = tuple(row[col] for col in column_names)
     return mapping.get(value_tuple)
 
+# TODO: docstring
 def authors_handling(conn, df:pd.DataFrame):
     df.columns = ['a_id', 'first_name', 'last_name']
     
