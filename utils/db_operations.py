@@ -5,7 +5,6 @@ import pandas as pd
 from utils import helpers
 
 # Create operations
-
 def create_db_from_schema(db_path:str, schema_path:str) -> int:
     '''
     Creates an SQLite3 database from an SQL file containing the schema 
@@ -50,7 +49,6 @@ def create_db_from_schema(db_path:str, schema_path:str) -> int:
         cursor.close()
         conn.close()
         return 1
-
 
 def add_record(conn:sqlite3.Connection, data_dict:dict, table_name:str) -> int:
     cursor = conn.cursor()
