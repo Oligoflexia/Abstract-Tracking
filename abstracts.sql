@@ -1,58 +1,71 @@
-CREATE TABLE Conference (
-    conference_ID INTEGER PRIMARY KEY,
-    start_date TEXT, -- YYYY-MM-DD
-    end_date TEXT, -- YYYY-MM-DD
-    conference_name TEXT,
-    location TEXT,
-    organization TEXT
-);
-
--- Think about a UNIQUE constraint on the name
 CREATE TABLE People (
-    person_ID INTEGER PRIMARY KEY,
+    PersonID INTEGER PRIMARY KEY,
+    prefix TEXT,
     first_name TEXT,
+    middle_name TEXT,
     last_name TEXT,
-    prefix TEXT, 
+    post_nominals TEXT,
     role TEXT
 );
 
-CREATE TABLE Attended (
-    c_id INTEGER,
-    p_id INTEGER,
-    PRIMARY KEY (c_id, p_id),
-    FOREIGN KEY(p_id) REFERENCES People(person_ID),
-    FOREIGN KEY(c_id) REFERENCES Conference(conference_ID)
+CREATE TABLE Abstracts (
+    AbstractID INTEGER PRIMARY KEY,
+    title TEXT,
+    authors BLOB, -- Just for human reference
+    summary BLOB,
+    pop_size INTEGER,
+    year INTEGER,
+    FOREIGN KEY(first_author) REFERENCES People(PersonID)
 );
 
-CREATE TABLE Abstract (
-    abstract_ID INTEGER PRIMARY KEY,
-    internal_ID INTEGER,
-    title TEXT,
+CREATE TABLE Conferences (
+    ConferenceID INTEGER PRIMARY KEY,
+    conference_name TEXT,
+    location TEXT,
+    start_date TEXT, -- YYYY-MM-DD
+    end_date TEXT, -- YYYY-MM-DD
+    organization TEXT
+);
+
+CREATE TABLE Attendances (
+    ConferenceID INTEGER,
+    PersonID INTEGER,
+    role TEXT,
+    PRIMARY KEY (ConferenceID, PersonID),
+    FOREIGN KEY(PersonID) REFERENCES People(PersonID),
+    FOREIGN KEY(ConferenceID) REFERENCES Conferences(ConferenceID)
+);
+
+CREATE TABLE Authorship (
+    PersonID INTEGER,
+    AbstractID INTEGER,
+    role TEXT CHECK (status IN ('First Author', 'Co-First Author', 'Co-Author', 'Lab PI')),
+    PRIMARY KEY (PersonID, AbstractID),
+    FOREIGN KEY(PersonID) REFERENCES People(PersonID),
+    FOREIGN KEY(AbstractID) REFERENCES Abstracts(AbstractID)
+);
+
+CREATE TABLE Presentations (
+    ConferenceID INTEGER,
+    AbstractID INTEGER,
+    PersonID INTEGER, -- presenter
+    presentation_day TEXT, -- YYYY-MM-DD
+    presentation_time TEXT, -- HH:MM-HH:MM
+    PRIMARY KEY (ConferenceID, AbstractID, PersonID),
+    FOREIGN KEY(ConferenceID) REFERENCES Conferences(ConferenceID),
+    FOREIGN KEY(AbstractID) REFERENCES Abstracts(AbstractID),
+    FOREIGN KEY(PersonID) REFERENCES People(PersonID)
+);
+
+CREATE TABLE Submissions (
+    internal_ID TEXT,
+    ConferenceID INTEGER,
+    AbstractID INTEGER,
+    SubmitterID INTEGER,
     section TEXT,
     status TEXT CHECK (status IN ('Submitted', 'Draft', 'Draft Collection', 'Draft Analysis')),
     result TEXT,
-    first_author INTEGER,
-    submitter_ID INTEGER,
-    presentation_day TEXT, -- YYYY-MM-DD
-    presentation_time TEXT, -- HH:MM-HH:MM
-    FOREIGN KEY(submitter_ID) REFERENCES People(person_ID),
-    FOREIGN KEY(first_author) REFERENCES People(person_ID)
-);
-
-CREATE TABLE Authors (
-    p_id INTEGER,
-    a_id INTEGER,
-    PRIMARY KEY (p_id, a_id),
-    FOREIGN KEY(p_id) REFERENCES People(person_ID),
-    FOREIGN KEY(a_id) REFERENCES Abstract(abstract_ID)
-);
-
-CREATE TABLE Presented (
-    c_id INTEGER,
-    a_id INTEGER,
-    p_id INTEGER, -- presenter
-    PRIMARY KEY (c_id, a_id, p_id),
-    FOREIGN KEY(c_id) REFERENCES Conference(conference_ID),
-    FOREIGN KEY(a_id) REFERENCES Abstract(abstract_ID),
-    FOREIGN KEY(p_id) REFERENCES People(person_ID)
+    FOREIGN KEY(ConferenceID) REFERENCES Conferences(ConferenceID),
+    FOREIGN KEY(AbstractID) REFERENCES Abstracts(AbstractID),
+    FOREIGN KEY(SubmitterID) REFERENCES People(PersonID),
 );
