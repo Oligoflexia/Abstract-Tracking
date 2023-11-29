@@ -95,7 +95,7 @@ def display_referenced_data(foreign_key_value, referenced_table, primary_key_col
 
 # Set up the main window and Treeview
 root = tk.Tk()
-root.title("Query Viewer")
+root.title("SQL Query Viewer")
 
 # Configure the grid layout
 root.grid_rowconfigure(1, weight=1)
