@@ -145,7 +145,7 @@ def drop_table_records(conn:sqlite3.Connection, table_name:str) -> int:
 def drop_record(conn:sqlite3.Connection, table_name:str, db_name:str, sql:str) -> int:
     pass
 
-def add_abstract_records(conn:sqlite3.Connection, dict_list:pd.DataFrame) -> int:
+def add_abstract_records(conn:sqlite3.Connection, dict_list:list[dict]) -> int:
     '''
     Creates new records in the database corresponding to every row in a 
     provided pd.DataFrame object. Handles insertions for values refering
@@ -200,10 +200,20 @@ def add_authors_records(conn:sqlite3.Connection, csv_records:pd.DataFrame) -> in
         else:
             logging.error("Record with p_id: %s, a_id: %s already exists!", dic['p_id'], dic['a_id'])
 
-def add_conference_records():
-    pass
+def add_conference_records(conn:sqlite3.Connection, dict_list:list[dict]):
+    for dic in dict_list:
+        params = {"conference_name": dic['conference_name'], "start_date": dic['start_date']}
+        
+        if not record_exists(conn, "Conferences", query_params=params):
+            try:
+                add_record(conn, dic, "Conferences")
+                logging.info("Conference with name %s added!", dic['conference_name'])
+            except sqlite3.Error as e:
+                logging.error("Ran into an error adding Conference: %s, error:%s", dic['conference_name'], e)
+        else:
+            logging.error("Conference with name: %s at date: %s already exists!", dic['conference_name'], dic['start_date'])
 
-def add_people_records(conn:sqlite3.Connection, csv_records:pd.DataFrame) -> int:
+def add_people_records(conn:sqlite3.Connection, csv_records:list[dict]) -> int:
     csv_records.columns = ['first_name', 'last_name', 'prefix', 'role']
     dict_list = csv_records.to_dict('records')
     
