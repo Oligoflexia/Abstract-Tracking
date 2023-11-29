@@ -3,7 +3,42 @@ from sqlite3 import Connection
 from utils import db_operations
 
 # TODO: Docstring, conference record
-def populate_from_csv(conn:Connection, csv_path:str) -> None:
+# def populate_from_csv(conn:Connection, csv_path:str) -> None:
+
+#     # Handle First Author and Submitted by columns
+#     first_authors = [name.split(', ')[0] for name in df['authors']]
+#     first_authors_dicts = []
+#     for fa in first_authors:
+#         flname = fa.split(" ")
+        
+#         if len(flname) != 2:
+#             first_authors_dicts.append({'first_name': fa, 'last_name': None})
+#         else:
+#             first_authors_dicts.append({'first_name': flname[0], 'last_name': flname[1]})
+    
+#     first_authors = pd.DataFrame(first_authors_dicts, columns=['first_name', 'last_name'])
+#     person_key_data = db_operations.get_pkeys_for_values(conn, 
+#                                                          'People', 'person_ID', 
+#                                                          'first_name', 'last_name')
+#     first_authors['first_author'] = first_authors.apply(map_cols_to_pkey, axis=1, 
+#                                                         mapping=person_key_data, 
+#                                                         column_names=['first_name', 
+#                                                                       'last_name'])
+#     first_authors.drop(['first_name', 'last_name'], axis=1, inplace=True)
+#     df['first_author'] = first_authors
+    
+#     person_key_data = db_operations.get_pkeys_for_values(conn, 
+#                                                          'People', 'person_ID', 
+#                                                          'first_name')
+#     df['submitter_ID'] = df.apply(map_cols_to_pkey, axis=1, 
+#                                   mapping=person_key_data, column_names=['submitter_ID'])
+    
+#     # Make sure that the date is converted properly
+#     df['presentation_day'] = pd.to_datetime(df['presentation_day'], errors='coerce')
+#     df['presentation_day'] = df['presentation_day'].dt.strftime("%Y-%m-%d") 
+    
+
+def populate_from_csv(conn:Connection, csv_path:str, year:int, conf:str) -> None:
     """
     Populates a given database with records from a CSV file.
     Handles replacements in columns with foreign key constraints 
@@ -21,16 +56,27 @@ def populate_from_csv(conn:Connection, csv_path:str) -> None:
         Modifies:
             - Currently connected database.
     """
-
+    
+    # 1. Converts the CSV to a pd.DF
+    # 2. Handle conference record creation
+    # 3. Create abstracts records and insert
+    
     df = pd.read_csv(csv_path)
     columns = ['internal_ID', 'title', 'authors', 'section', 'status', 'submitter_ID',
                'result', 'presentation_day', 'presentation_time']
     
     df.columns = columns
+
+
+    # Create abstracts records
+    abstracts = df[['title', 'authors']]
+    abstracts = abstracts.drop_duplicates(subset=['title', 'authors'])
+    abstracts['summary'] = ""
+    abstracts['pop_size'] = 0
+    abstracts['year'] = year
     
-    # convert all abstract IDs to integer values and fill in missing values with 0
-    df['internal_ID'] = pd.to_numeric(df['internal_ID'], errors='coerce')
-    df['internal_ID'] = df['internal_ID'].fillna(0).astype(int)
+    abstracts_dict = abstracts.to_dict('records')
+    db_operations.add_abstract_records(conn, abstracts_dict)
     
     # Create conference record (if required)
     
@@ -39,47 +85,17 @@ def populate_from_csv(conn:Connection, csv_path:str) -> None:
     names = format_authors(df)
     db_operations.add_people_records(conn, names)
     
-    # Handle First Author and Submitted by columns
-    first_authors = [name.split(', ')[0] for name in df['authors']]
-    first_authors_dicts = []
-    for fa in first_authors:
-        flname = fa.split(" ")
-        
-        if len(flname) != 2:
-            first_authors_dicts.append({'first_name': fa, 'last_name': None})
-        else:
-            first_authors_dicts.append({'first_name': flname[0], 'last_name': flname[1]})
-    
-    first_authors = pd.DataFrame(first_authors_dicts, columns=['first_name', 'last_name'])
-    person_key_data = db_operations.get_pkeys_for_values(conn, 
-                                                         'People', 'person_ID', 
-                                                         'first_name', 'last_name')
-    first_authors['first_author'] = first_authors.apply(map_cols_to_pkey, axis=1, 
-                                                        mapping=person_key_data, 
-                                                        column_names=['first_name', 
-                                                                      'last_name'])
-    first_authors.drop(['first_name', 'last_name'], axis=1, inplace=True)
-    df['first_author'] = first_authors
-    
-    person_key_data = db_operations.get_pkeys_for_values(conn, 
-                                                         'People', 'person_ID', 
-                                                         'first_name')
-    df['submitter_ID'] = df.apply(map_cols_to_pkey, axis=1, 
-                                  mapping=person_key_data, column_names=['submitter_ID'])
-    
-    # Make sure that the date is converted properly
-    df['presentation_day'] = pd.to_datetime(df['presentation_day'], errors='coerce')
-    df['presentation_day'] = df['presentation_day'].dt.strftime("%Y-%m-%d") 
-    
-    # Insert the abstract records
-    dict_list = df.drop(['authors'], axis=1).to_dict('records')
-    db_operations.add_abstract_records(conn, dict_list)
-    
     # Insert author data
     authors_df = df.loc[:, ['internal_ID', 'authors']]
     authors = expand_authors_df(authors_df)
     authors = authors_handling(conn, authors)
     db_operations.add_authors_records(conn, authors)
+    
+    
+    
+    
+    
+
 
 def format_authors(df:pd.DataFrame) -> pd.DataFrame:
     """
@@ -120,7 +136,7 @@ def format_authors(df:pd.DataFrame) -> pd.DataFrame:
     
     return names
 
-# TODO: Docstring
+# TODO: Docstring, prompt for cases != 2
 def expand_authors_df(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df['authors'] = df['authors'].apply(lambda x: [name.strip() for name in x.split(',')])
