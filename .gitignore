@@ -3,12 +3,12 @@
 
 # Python
 .venv
-*/__pycache__
+**/__pycache__
 *.egg-info/
 scratch.py
 
 # Personal Data
 data/
 logs/
-*/.env
-*/*.db
+**/.env
+**/*.db
