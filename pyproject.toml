@@ -39,4 +39,4 @@ classifiers = [
 [project.scripts]
 
 [tool.setuptools]
-packages = ["app", "app.ui", "config", "tests", "utils"]
+packages = ["app", "app.interface", "config", "tests", "utils"]
