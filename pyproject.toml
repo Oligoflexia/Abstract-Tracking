@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Abstract-Tracking"
+version = "0.1a0"
+dependencies = [
+    "Babel==2.13.1",
+    "numpy==1.26.2",
+    "pandas==2.1.3",
+    "python-dateutil==2.8.2",
+    "pytz==2023.3.post1",
+    "six==1.16.0",
+    "tkcalendar==1.6.1",
+    "tzdata==2023.3",
+]
+requires-python = ">=3.10"
+authors = [
+    {name = "Souvik Maiti", email = "souvik.maiti1@ucalgary.ca"},
+]
+description = "Track and query abstract submissions for academic conferences."
+readme = "README.rst"
+license = { file = "LICENSE" }
+keywords = ["document tracking", "abstract paper", "academic conference", "database"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Database :: Front-Ends",
+]
+
+[project.urls]
+
+[project.scripts]
+
+[tool.setuptools]
+packages = ["app", "app.ui", "config", "tests", "utils"]

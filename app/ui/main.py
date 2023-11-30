@@ -34,12 +34,17 @@ button2 = ttk.Button(sidebar, text="App 2", command=lambda: print("Open App 2"))
 button2.pack(padx=10, pady=10, fill="x")
 
 # Main content area below the banner, next to the sidebar
-main_content = ttk.Label(root, text="Main Content Area", anchor="center")
+main_content = ttk.Frame(root)
 main_content.grid(row=1, column=1, sticky="nsew")
 
+connect_button = ttk.Button(main_content, text="Connect", command=lambda: print("Connect DB"))
+connect_button.grid(row=0, column=0)
 
+connect_button = ttk.Button(main_content, text="CSV Import", command=lambda: print("CSV Import"))
+connect_button.grid(row=1, column=0)
 
-
+connect_button = ttk.Button(main_content, text="Data Files", command=lambda: print("Data Files"))
+connect_button.grid(row=1, column=1)
 
 if __name__ == "__main__":
     
