@@ -5,7 +5,6 @@ import sqlite3
 # Python's with statement. This ensures that the connection is properly
 # closed even if an error occurs.
 
-
 class DBConnection:
     def __init__(self, db_name):
         self.db_path = "data/db/" + db_name
@@ -20,3 +19,6 @@ class DBConnection:
         if self.connection is not None:
             self.connection.close()
             self.connection = None
+
+
+

@@ -3,15 +3,12 @@ from tkinter import ttk, messagebox, filedialog
 import sqlite3
 import csv
 from utils import dbconnections
+#from interface import BaseWindow
 
+#class SQLExplorer(BaseWindow):
+    
 # Mapping of foreign key columns (column name to referenced table)
-foreign_key_mappings = {
-    'submitter_ID': ('People', 'person_ID'),
-    'first_author': ('People', 'person_ID'),
-    'c_id': ('Conference', 'conference_ID'),
-    'p_id': ('People', 'person_ID'),
-    'a_id': ('Abstract', 'abstract_ID')
-}
+
 
 def export_to_csv():
     try:

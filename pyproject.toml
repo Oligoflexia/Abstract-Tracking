@@ -40,3 +40,13 @@ classifiers = [
 
 [tool.setuptools]
 packages = ["app", "app.interface", "config", "tests", "utils"]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "N", "D"]
+ignore = []
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
