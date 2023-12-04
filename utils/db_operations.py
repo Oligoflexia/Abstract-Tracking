@@ -3,6 +3,16 @@ import sqlite3
 import logging
 import pandas as pd
 
+# SQL Execute operation
+# This should only ever be run from the SQLExplorer.
+# Therefore does not call conn.commit()
+def execute_SQL(SQL: str, conn: sqlite3.Connection) -> None:
+    cursor.execute(query)
+    column_names = [description[0] for description in cursor.description]
+    rows = cursor.fetchall()
+    update_treeview_columns(column_names)
+    update_table(rows)
+    messagebox.showinfo("Query Status", "Query executed successfully.")
 
 # Create operations
 def create_db_from_schema(db_path: str, schema_path: str) -> int:

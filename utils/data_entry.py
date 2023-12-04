@@ -1,5 +1,7 @@
 import pandas as pd
 from sqlite3 import Connection
+import csv
+
 from utils import db_operations
 
 # TODO: Docstring, conference record
@@ -38,30 +40,29 @@ from utils import db_operations
 #     df['presentation_day'] = df['presentation_day'].dt.strftime("%Y-%m-%d") 
     
 
-def populate_from_csv(conn:Connection, csv_path:str, year:int, conf:str) -> None:
-    """
-    Populates a given database with records from a CSV file.
-    Handles replacements in columns with foreign key constraints 
+def populate_from_csv(conn:Connection, csv_path: str, year:int, conf:str) -> None:
+    """Populates a given database with records from a CSV file.
+
+    Handles replacements in columns with foreign key constraints
     automatically.
     Expects proper formatting in the CSV file:
-        - TODO
-    
-        Parameters:
-            - conn (Connection object): a SQLite3 connection object.
-            - csv_path (str): path to a CSV containing data (in 'data/')
-        
-        Returns:
-            - None
-        
-        Modifies:
-            - Currently connected database.
+        - TODO.
+
+    Parameters:
+        - conn (Connection object): a SQLite3 connection object.
+        - csv_path (str): path to a CSV containing data (in 'data/')
+
+    Returns:
+        - None
+
+    Modifies:
+        - Currently connected database.
     """
-    
     # 1. Converts the CSV to a pd.DF
     # 2. Handle conference record creation
     # 3. Create abstracts records and insert
     
-    df = pd.read_csv(csv_path)
+    df: pd.DataFrame = pd.read_csv(csv_path)
     columns = ['internal_ID', 'title', 'authors', 'section', 'status', 'submitter_ID',
                'result', 'presentation_day', 'presentation_time']
     
@@ -174,3 +175,13 @@ def authors_handling(conn, df:pd.DataFrame):
     df['a_id'] = df.apply(map_cols_to_pkey, axis=1, mapping=abstract_key_data, column_names=['a_id'])
     
     return df
+
+
+def write_CSV(file_path: str, tree) -> None:
+    with open(file_path, 'w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(tree["columns"])
+
+        for row_id in tree.get_children():
+            row = tree.item(row_id)['values']
+            writer.writerow(row)

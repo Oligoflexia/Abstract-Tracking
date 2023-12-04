@@ -1,143 +1,133 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, filedialog, messagebox
 import sqlite3
-import csv
-from utils import dbconnections
-#from interface import BaseWindow
 
-#class SQLExplorer(BaseWindow):
-    
-# Mapping of foreign key columns (column name to referenced table)
+from utils import write_CSV, execute_SQL
+from .window_classes import SecondaryWindow
 
+foreign_key_mappings = {}
 
-def export_to_csv():
-    try:
-        # Open a file dialog to choose where to save the CSV
-        file_path = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("CSV files", "*.csv")])
-        if not file_path:  # Check if the user canceled the save operation
-            return
+class SQLExplorer(SecondaryWindow):
+    def __init__(self: "SQLExplorer", parent) -> None:
+        super().__init__(parent)
+        self.title("SQL Query Viewer")
+        self.create_window_elements()
+        self.configure_grids()
 
-        with open(file_path, 'w', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file)
-            writer.writerow(tree["columns"])  # Write column headers
+    def create_window_elements(self: "SQLExplorer") -> None:
+        # Text box for SQL query with a scrollbar
+        # main Frame to hold everything
+        main_frame = ttk.Frame(self)
+        self.main = main_frame
 
-            for row_id in tree.get_children():
-                row = tree.item(row_id)['values']
-                writer.writerow(row)
+        main_frame.grid(
+            row=0, column=0, columnspan=2, sticky='ew', padx=10, pady=10
+            )
 
-        messagebox.showinfo("Export Status", f"Data exported to '{file_path}' successfully.")
-    except Exception as e:
-        messagebox.showerror("Export Error", f"An error occurred: {e}")
+        query_box = tk.Text(main_frame, height=4, width=50)
+        self.query_box = query_box
 
-def run_query():
-    query = query_box.get("1.0", 'end-1c')  # Get the query from text box
-    try:
-        cursor.execute(query)
-        column_names = [description[0] for description in cursor.description]
-        rows = cursor.fetchall()
-        update_treeview_columns(column_names)
-        update_table(rows)
-        messagebox.showinfo("Query Status", "Query executed successfully.")
-    except sqlite3.Error as error:
-        messagebox.showerror("Query Error", f"An error occurred: {error}")
+        query_box.grid(row=0, column=0, sticky='ew')
 
-def update_treeview_columns(column_names):
-    tree["columns"] = column_names
-    tree.delete(*tree.get_children())
-    for col in column_names:
-        tree.heading(col, text=col)
-        tree.column(col, anchor=tk.CENTER)
+        scrollbar = ttk.Scrollbar(main_frame, command=query_box.yview)
+        scrollbar.grid(row=0, column=1, sticky='ns')
+        query_box['yscrollcommand'] = scrollbar.set
 
-def update_table(rows):
-    for row in rows:
-        tree.insert("", 'end', values=row)
+        # Button to execute the SQL query
+        run_button = ttk.Button(self, text="Run Query", command=self.run_query)
+        run_button.grid(row=2, column=0, pady=5, padx=10)
 
-def on_treeview_click(event):
-    region = tree.identify("region", event.x, event.y)
-    if region == "cell":
-        row_id = tree.identify_row(event.y)
-        column_id = tree.identify_column(event.x)
-        column_name = tree.heading(column_id, 'text')
-        if column_name in foreign_key_mappings:
-            foreign_key_value = tree.set(row_id, column_id)
-            referenced_table, primary_key_column = foreign_key_mappings[column_name]
-            display_referenced_data(foreign_key_value, referenced_table, primary_key_column)
+        # Treeview for the table
+        tree = ttk.Treeview(self, columns=(1, 2, 3), show="headings")
+        self.tree = tree
 
-def display_referenced_data(foreign_key_value, referenced_table, primary_key_column):
-    query = f"SELECT * FROM {referenced_table} WHERE {primary_key_column} = ?"
-    cursor.execute(query, (foreign_key_value,))
-    data = cursor.fetchone()
-    if data:
-        # Fetch the column names for the referenced table
-        column_names = [description[0] for description in cursor.description]
-        formatted_data = '\n'.join([f"{col}: {val}" for col, val in zip(column_names, data)])
+        tree.grid(row=1, column=0, columnspan=2, sticky='nsew', padx=10)
+        tree.bind("<Button-1>", self.on_treeview_click)
 
-        # Create a Toplevel window
-        top = tk.Toplevel(root)
-        top.title(f"{referenced_table} Details")
-        top.wm_attributes("-topmost", True)
+        # Adding a button for CSV export
+        export_button = ttk.Button(self, text="Export to CSV", command=self.export_to_csv)
+        export_button.grid(row=2, column=1, pady=5, padx=10)
 
-        # Create a Text widget
-        text = tk.Text(top, wrap='none')  # 'none' to avoid line wrapping
-        text.insert('1.0', formatted_data)
-        text.config(state='disabled')  # Make the text read-only
-        text.pack(expand=True, fill='both')
+    def configure_grids(self: "SQLExplorer") -> None:
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.main.grid_columnconfigure(0, weight=1)
 
-        # Optionally, add a scrollbar
-        scrollbar = tk.Scrollbar(top, command=text.yview)
-        scrollbar.pack(side='right', fill='y')
-        text['yscrollcommand'] = scrollbar.set
-    else:
-        messagebox.showerror("Data Not Found", f"No data found for ID {foreign_key_value} in {referenced_table}")
+    def export_to_csv(self: "SQLExplorer") -> None:
+        filetypes = [("CSV files", "*.csv")]
+        try:
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".csv", filetypes=filetypes
+                )
 
-# Set up the main window and Treeview
-root = tk.Tk()
-root.title("SQL Query Viewer")
+            if not file_path:  # Check if the user canceled the save operation
+                return
+            else:
+                write_CSV(file_path, self.tree)
+                success_msg = f"Data exported to '{file_path}' successfully."
+                messagebox.showinfo("Export Status", success_msg)
+        except Exception as e:
+            messagebox.showerror("Export Error", f"An error occurred: {e}")
 
-# Configure the grid layout
-root.grid_rowconfigure(1, weight=1)
-root.grid_columnconfigure(0, weight=1)
-root.grid_columnconfigure(1, weight=1)
+    def run_query(self: "SQLExplorer") -> None:
+        query = self.query_box.get("1.0", 'end-1c')
+        try:
+            execute_SQL(query, self.parent.get_connection())
+        except sqlite3.Error as error:
+            messagebox.showerror("Query Error", f"An error occurred: {error}")
 
-# Text box for SQL query with a scrollbar
-query_frame = tk.Frame(root)
-query_frame.grid(row=0, column=0, columnspan=2, sticky='ew', padx=10, pady=10)
-query_frame.grid_columnconfigure(0, weight=1)
+    def update_treeview_columns(self, column_names):
+        self.tree["columns"] = column_names
+        self.tree.delete(*self.tree.get_children())
+        for col in column_names:
+            self.tree.heading(col, text=col)
+            self.tree.column(col, anchor=tk.CENTER)
 
-query_box = tk.Text(query_frame, height=4, width=50)
-query_box.grid(row=0, column=0, sticky='ew')
+    def update_table(self, rows):
+        for row in rows:
+            self.tree.insert("", 'end', values=row)
 
-scrollbar = tk.Scrollbar(query_frame, command=query_box.yview)
-scrollbar.grid(row=0, column=1, sticky='ns')
-query_box['yscrollcommand'] = scrollbar.set
+    def on_treeview_click(self, event):
+        region = self.tree.identify("region", event.x, event.y)
+        if region == "cell":
+            row_id = self.tree.identify_row(event.y)
+            column_id = self.tree.identify_column(event.x)
+            column_name = self.tree.heading(column_id, 'text')
+            if column_name in foreign_key_mappings:
+                foreign_key_value = self.tree.set(row_id, column_id)
+                referenced_table, primary_key_column = foreign_key_mappings[column_name]
+                #self.display_referenced_data(foreign_key_value, referenced_table, primary_key_column)
 
-# Button to execute the query
-run_button = tk.Button(root, text="Run Query", command=run_query)
-run_button.grid(row=2, column=0, pady=5, padx=10)
+    # def display_referenced_data(foreign_key_value, referenced_table, primary_key_column):
+    #     query = f"SELECT * FROM {referenced_table} WHERE {primary_key_column} = ?"
+    #     cursor.execute(query, (foreign_key_value,))
+    #     data = cursor.fetchone()
+    #     if data:
+    #         # Fetch the column names for the referenced table
+    #         column_names = [description[0] for description in cursor.description]
+    #         formatted_data = '\n'.join([f"{col}: {val}" for col, val in zip(column_names, data)])
 
-# Treeview for the table
-tree = ttk.Treeview(root, columns=(1, 2, 3), show="headings")
-tree.grid(row=1, column=0, columnspan=2, sticky='nsew', padx=10)
-tree.bind("<Button-1>", on_treeview_click)
+    #         # Create a Toplevel window
+    #         top = tk.Toplevel(root)
+    #         top.title(f"{referenced_table} Details")
+    #         top.wm_attributes("-topmost", True)
 
-# Adding a button for CSV export
-export_button = ttk.Button(root, text="Export to CSV", command=export_to_csv)
-export_button.grid(row=2, column=1, pady=5, padx=10)
+    #         # Create a Text widget
+    #         text = tk.Text(top, wrap='none')  # 'none' to avoid line wrapping
+    #         text.insert('1.0', formatted_data)
+    #         text.config(state='disabled')  # Make the text read-only
+    #         text.pack(expand=True, fill='both')
 
-
-if __name__ == "__main__":
-    
-    dbconnection = dbconnections.DBConnection('abstracts.db')
-    
-    try:
-        conn = dbconnection.get_connection()
-        cursor = conn.cursor()
-
-        root.lift()  # Bring the window to the top
-        root.after(1000, lambda: root.attributes("-topmost", False))  # Remove 'always on top' after 1 second
-        root.mainloop()
+    #         # Optionally, add a scrollbar
+    #         scrollbar = tk.Scrollbar(top, command=text.yview)
+    #         scrollbar.pack(side='right', fill='y')
+    #         text['yscrollcommand'] = scrollbar.set
+    #     else:
+    #         messagebox.showerror("Data Not Found", f"No data found for ID {foreign_key_value} in {referenced_table}")
 
     
-    finally:
-        dbconnection.close_connection()
+
+
+
 
