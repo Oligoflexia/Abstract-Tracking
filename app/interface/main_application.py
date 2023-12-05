@@ -1,11 +1,10 @@
 from tkinter import ttk, filedialog
 from typing import Union
-from sqlite3 import Connection
+from sqlite3 import Cursor
 import os
 
 from utils import DBConnection
 from .window_classes import MainWindow
-from .SQL_explorer import SQLExplorer
 
 
 # Global variables
@@ -16,7 +15,6 @@ DBCONNECTION: Union[DBConnection, None] = None
 class MainApplication(MainWindow):
     def __init__(self: "MainApplication") -> None:
         super().__init__()
-        self.DBConnection = None
 
         self.populate_sidebar()
         self.populate_main_content_area()
@@ -25,14 +23,14 @@ class MainApplication(MainWindow):
         sql_explorer_button = ttk.Button(
             self.sidebar,
             text="SQL Explorer",
-            command=lambda: print("SQLExplorer"),
+            command=self.open_sqlexplorer,
         )
         sql_explorer_button.pack(padx=10, pady=10)
 
         db_explorer_button = ttk.Button(
             self.sidebar,
             text="DB Explorer",
-            command=lambda: print("DB Explorer"),
+            command=self.open_dbexplorer,
         )
         db_explorer_button.pack(padx=10, pady=10, fill="x")
 
@@ -54,7 +52,7 @@ class MainApplication(MainWindow):
         data_folder_button = ttk.Button(
             self.main_content_area,
             text="Data Files",
-            command=lambda: print("Data Files")
+            command=self.show_data_folder,
         )
         data_folder_button.grid(row=1, column=1)
 
@@ -92,9 +90,29 @@ class MainApplication(MainWindow):
             self.connected_db_text.set(connected_db_text)
             self.turn_banner_green()
 
-    def open_SQLExplorer(self: "MainApplication") -> None:
-        SQLexplorer = SQLExplorer(self)
+    def open_sqlexplorer(self: "MainApplication") -> None:
+        from .sql_explorer import SQLExplorer
+        self.sqlexplorer = SQLExplorer(self)
 
-    def get_connection(self: "MainApplication") -> Connection:
-        if self.DBConnection:
-            return self.DBConnection.get_connection()
+    def open_dbexplorer(self: "MainApplication") -> None:
+        from .db_explorer import DBExplorer
+        self.dbexplorer = DBExplorer(self)
+
+    def get_cursor(self: "MainApplication") -> Cursor:
+        return self.DBConnection.get_connection().cursor()
+
+    # TODO: Default folder for upload
+    # TODO: Think about a separate button for viewing and download
+    def show_data_folder(self: "MainApplication") -> None:
+        file_types = [
+            ("New Microsoft Excel", "*.xlsx"),
+            ("Old Microsoft Excel", "*.xls"),
+            ("Comma Separated Values (CSV)", "*.csv"),
+            ]
+        file_names = filedialog.askopenfilenames(
+            title="Upload data files", filetypes=file_types
+        )
+
+        if file_names:
+            for file in file_names:
+                print(file)

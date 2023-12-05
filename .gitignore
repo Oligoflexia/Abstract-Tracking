@@ -12,3 +12,6 @@ data/
 logs/
 **/.env
 **/*.db
+
+# Config
+.DS_Store

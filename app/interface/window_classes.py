@@ -21,6 +21,7 @@ class BaseWindow:
         self: "BaseWindow", parent: Union["MainWindow", "SecondaryWindow"]
     ) -> None:
         self.parent = parent
+        self.configure_window()
 
     def configure_window(self: "BaseWindow") -> None:
         self.parent.title(f"Abstract Tracker {VERSION} {VERSION_NUM}")
@@ -100,7 +101,10 @@ class MainWindow(tk.Tk, BaseWindow):
 
 class SecondaryWindow(tk.Toplevel, BaseWindow):
     def __init__(
-        self: "SecondaryWindow",parent: Union[MainWindow, "SecondaryWindow"]
+        self: "SecondaryWindow",
+        parent: Union[MainWindow, "SecondaryWindow"]
     ) -> None:
+
         tk.Toplevel.__init__(self, parent)
+        self.parent = parent
         BaseWindow.__init__(self, self)
