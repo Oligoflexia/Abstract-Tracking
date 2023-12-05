@@ -3,23 +3,23 @@ from tkinter import ttk, filedialog, messagebox
 from typing import Any
 import sqlite3
 
-from utils import write_CSV, execute_sql
+from utils import write_CSV, execute_sql, get_fkey_mappings
 from .window_classes import SecondaryWindow
 
-
-foreign_key_mappings = {}
 
 # TODO: Don't let you launch the app unless DB connected
 # TODO: figure out automatic way to get foreign_key_mappings
 # TODO: type annotations
 class SQLExplorer(SecondaryWindow):
     from .main_application import MainApplication
+
     def __init__(self: "SQLExplorer", parent: MainApplication) -> None:
         super().__init__(parent)
         self.parent = parent
         self.title("SQL Query Viewer")
         self.create_window_elements()
         self.configure_grids()
+        self.get_fk_dict()
 
     def create_window_elements(self: "SQLExplorer") -> None:
         # Text box for SQL query with a scrollbar
@@ -81,7 +81,8 @@ class SQLExplorer(SecondaryWindow):
     def run_query(self: "SQLExplorer") -> None:
         from .main_application import MainApplication
         query = self.query_box.get("1.0", "end-1c")
-        assert(isinstance(self.parent, MainApplication))
+
+        assert (isinstance(self.parent, MainApplication))
         cursor = self.parent.get_cursor()
 
         try:
@@ -104,34 +105,35 @@ class SQLExplorer(SecondaryWindow):
         for row in rows:
             self.tree.insert("", "end", values=row)
 
-    def on_treeview_click(self: "SQLExplorer", event) -> None:
+    def on_treeview_click(self: "SQLExplorer", event: tk.Event) -> None:
         region = self.tree.identify("region", event.x, event.y)
         if region == "cell":
             row_id = self.tree.identify_row(event.y)
             column_id = self.tree.identify_column(event.x)
             column_name = self.tree.heading(column_id, "text")
-            if column_name in foreign_key_mappings:
-                foreign_key_value = self.tree.set(row_id, column_id)
-                referenced_table, primary_key_column = foreign_key_mappings[
-                    column_name
-                ]
+            if column_name in self.foreign_key_mappings:
+                fk_value = self.tree.set(row_id, column_id)
+                referenced_table = self.foreign_key_mappings[column_name][0]
+                primary_key_column = self.foreign_key_mappings[column_name][1]
                 self.display_referenced_data(
-                    foreign_key_value, referenced_table, primary_key_column
+                    fk_value, referenced_table, primary_key_column
                 )
 
     def display_referenced_data(
-        self, foreign_key_value, referenced_table, primary_key_column
+        self: "SQLExplorer",
+        fk_value: str, referenced_table: str, primary_key_column: str
     ) -> None:
         from .main_application import MainApplication
 
         query = (
             f"SELECT * FROM {referenced_table} WHERE {primary_key_column} = ?"
         )
-        assert(isinstance(self.parent, MainApplication))
+
+        assert (isinstance(self.parent, MainApplication))
         cursor = self.parent.get_cursor()
 
         # TODO: refactor this  into db_operations
-        cursor.execute(query, (foreign_key_value,))
+        cursor.execute(query, (fk_value,))
         data = cursor.fetchone()
 
         if data:
@@ -161,5 +163,9 @@ class SQLExplorer(SecondaryWindow):
         else:
             messagebox.showerror(
                 "Data Not Found",
-                f"No data found for ID {foreign_key_value} in {referenced_table}",
+                f"No data found for ID {fk_value} in {referenced_table}",
             )
+
+    def get_fk_dict(self: "SQLExplorer") -> None:
+        cursor = self.parent.get_cursor()
+        self.foreign_key_mappings = get_fkey_mappings(cursor)

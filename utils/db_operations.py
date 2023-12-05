@@ -3,14 +3,15 @@ import sqlite3
 import logging
 import pandas as pd
 
-from typing import Tuple, Any
+from typing import Dict, Tuple, Any
+
 
 # SQL Execute operation
 # This should only ever be run from the SQLExplorer.
 # Therefore does not call conn.commit()
 def execute_sql(
     query: str, cursor: sqlite3.Cursor
-    ) -> Tuple[list[str], list[Any]]:
+     ) -> Tuple[list[str], list[Any]]:
     cursor.execute(query)
     column_names = [description[0] for description in cursor.description]
     rows = cursor.fetchall()
@@ -117,13 +118,20 @@ def get_pkeys_for_values(
     return {tuple(row[1:]): row[0] for row in data}
 
 
-def get_all_fkeys(conn: sqlite3.Connection) -> dict[str:tuple]:
-    SELECT = "SELECT fk.'from' AS foreign_key, m.name, fk.'to' AS reference\n"
-    FROM = (
+def get_fkey_mappings(cursor: sqlite3.Cursor) -> Dict[str, Tuple[str, str]]:
+    fk_dict = {}
+    select = "SELECT DISTINCT fk.'from', fk.'table', fk.'to'\n"
+    from_statement = (
         "FROM sqlite_schema AS m,\n\tpragma_foreign_key_list(m.name) AS fk\n"
     )
-    WHERE = "WHERE m.type='table';"
+    query = select + from_statement
 
+    _, rows = execute_sql(query, cursor)
+
+    for row in rows:
+        fk_dict[row[0]] = (row[1], row[2])
+
+    return fk_dict
 
 # Update operations
 
