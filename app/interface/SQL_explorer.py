@@ -73,11 +73,11 @@ class SQLExplorer(SecondaryWindow):
     def run_query(self: "SQLExplorer") -> None:
         query = self.query_box.get("1.0", 'end-1c')
         try:
-            execute_SQL(query, self.parent.get_connection())
+            execute_SQL(query, super().parent.get_connection())
         except sqlite3.Error as error:
             messagebox.showerror("Query Error", f"An error occurred: {error}")
 
-    def update_treeview_columns(self, column_names):
+    def update_treeview_columns(self: "SQLExplorer", column_names):
         self.tree["columns"] = column_names
         self.tree.delete(*self.tree.get_children())
         for col in column_names:
