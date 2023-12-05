@@ -104,7 +104,5 @@ class SecondaryWindow(tk.Toplevel, BaseWindow):
         self: "SecondaryWindow",
         parent: Union[MainWindow, "SecondaryWindow"]
     ) -> None:
-
         tk.Toplevel.__init__(self, parent)
-        self.parent = parent
         BaseWindow.__init__(self, self)

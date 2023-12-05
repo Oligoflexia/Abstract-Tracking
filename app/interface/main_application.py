@@ -45,7 +45,7 @@ class MainApplication(MainWindow):
         csv_button = ttk.Button(
             self.main_content_area,
             text="CSV Import",
-            command=lambda: print("CSV Import"),
+            command=self.open_csventry,
         )
         csv_button.grid(row=1, column=0)
 
@@ -97,6 +97,10 @@ class MainApplication(MainWindow):
     def open_dbexplorer(self: "MainApplication") -> None:
         from .db_explorer import DBExplorer
         self.dbexplorer = DBExplorer(self)
+
+    def open_csventry(self: "MainApplication") -> None:
+        from .csv_entry import CSVEntry
+        self.csventry = CSVEntry(self)
 
     def get_cursor(self: "MainApplication") -> Cursor:
         return self.DBConnection.get_connection().cursor()

@@ -189,7 +189,7 @@ submit_button.grid(
 )
 
 if __name__ == "__main__":
-    dbconnection = dbconnections.DBConnection("abstracts.db")
+    dbconnection = dbconnections.DBConnection("/home/soup/Desktop/Projects/Abstract-Tracking/data/db/abstracts.db")
 
     try:
         logger = logging.getLogger()

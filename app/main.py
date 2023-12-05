@@ -1,4 +1,4 @@
-from interface import MainApplication
+from app.interface import MainApplication
 
 
 def main() -> None:

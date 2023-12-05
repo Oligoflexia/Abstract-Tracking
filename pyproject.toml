@@ -39,7 +39,13 @@ classifiers = [
 [project.scripts]
 
 [tool.setuptools]
-packages = ["app", "app.interface", "config", "tests", "utils"]
+packages = ["app",
+            "app.interface",
+            "app.interface.csv_entry",
+            "config",
+            "tests",
+            "utils"
+         ]
 
 [tool.ruff]
 line-length = 79
