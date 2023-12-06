@@ -8,6 +8,9 @@ Project Critical:
     - [ ] (App) Correct internal vs external imports
     - [ ] (App) find out why inheritance isn't working between parent -> SecondaryWindow
     - [ ] (App) error messages showing behind opened window
+    - [ ] (CSVEntry) window resizing to conferences table (or scrollbar)
+    - [ ] (CSVEntry) AttributeError if opening app without DB selected
+    - [ ] (CSVEntry) ValueError if opening app without spreadsheet selected
 
 - [ ] (CSV Entry) first author handling on abstract CSV record entry
 - [ ] (CSV Entry) CSV sanity checks

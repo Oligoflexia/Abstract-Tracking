@@ -24,11 +24,7 @@ class CSVEntry(SecondaryWindow):
     def init_df(self: "CSVEntry") -> DataFrame:
         global CSV_DATA
         filename = ""
-        filetypes = [
-            ("New Excel", "*.xlsx"),
-            ("Old Excel", "*.xls"),
-            ("Comma Separated Values (CSV)", "*.csv")
-         ]
+        filetypes = [("Spreadsheet Files", ".xlsx .xls .csv")]
         filename = filedialog.askopenfilename(
             initialdir=path.abspath(path.join("data", "raw")),
             filetypes=filetypes

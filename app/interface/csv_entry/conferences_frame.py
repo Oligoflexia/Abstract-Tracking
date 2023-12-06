@@ -1,14 +1,19 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
+from typing import List, Tuple
 
 from app.logger import error_box
 from utils import add_conference_records
 
-class Conferences(tk.Frame):
+
+class Conferences(ttk.Frame):
     from .csv_entry import CSVEntry
 
-    def __init__(self: "Conferences", parent, controller) -> None:
+    def __init__(
+        self: "Conferences", parent: ttk.Frame, controller: CSVEntry
+     ) -> None:
+
         super().__init__(parent)
         self.controller = controller
         self.create_window_elements()
@@ -203,8 +208,10 @@ class Conferences(tk.Frame):
         except sqlite3.Error as error:
             messagebox.showerror("Query Error", f"An error occurred: {error}")
 
-    def update_table(self: "Conferences", rows) -> None:
+    def update_table(
+        self: "Conferences", rows: List[Tuple[int, str, str, str, str, str]]
+         ) -> None:
+
         self.tree.delete(*self.tree.get_children())
         for row in rows:
-            print(row)
             self.tree.insert("", "end", values=row)
