@@ -18,7 +18,7 @@ class SQLExplorer(SecondaryWindow):
         self.parent = parent
         self.title("SQL Query Viewer")
         self.create_window_elements()
-        self.configure_grids()
+        self.configure_layout()
         self.get_fk_dict()
 
     def create_window_elements(self: "SQLExplorer") -> None:
@@ -57,7 +57,7 @@ class SQLExplorer(SecondaryWindow):
         )
         export_button.grid(row=2, column=1, pady=5, padx=10)
 
-    def configure_grids(self: "SQLExplorer") -> None:
+    def configure_layout(self: "SQLExplorer") -> None:
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)

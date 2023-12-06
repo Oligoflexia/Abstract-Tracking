@@ -1,15 +1,9 @@
 from tkinter import ttk, filedialog
-from typing import Union
-from sqlite3 import Cursor
+from sqlite3 import Cursor, Connection
 import os
 
 from utils import DBConnection
 from .window_classes import MainWindow
-
-
-# Global variables
-# DBConnection object
-DBCONNECTION: Union[DBConnection, None] = None
 
 
 class MainApplication(MainWindow):
@@ -71,9 +65,9 @@ class MainApplication(MainWindow):
         settings_button.grid(row=2, column=1)
 
     def connect_db(self: "MainApplication") -> None:
-        global DBCONNECTION
         data_folder_dir_path = os.path.join("data", "db")
         abs_data_folder_dir_path = os.path.abspath(data_folder_dir_path)
+        self.data_path = abs_data_folder_dir_path
 
         file_types = [("Database Files", "*.db")]
 
@@ -83,7 +77,6 @@ class MainApplication(MainWindow):
         )
         if filename:
             self.DBConnection = DBConnection(filename)
-            DBCONNECTION = self.DBConnection
 
             db_name = os.path.basename(filename)
             connected_db_text = "Currently connected database: " + db_name
@@ -104,6 +97,10 @@ class MainApplication(MainWindow):
 
     def get_cursor(self: "MainApplication") -> Cursor:
         return self.DBConnection.get_connection().cursor()
+
+    def get_conn(self: "MainApplication") -> Connection:
+        return self.DBConnection.get_connection()
+
 
     # TODO: Default folder for upload
     # TODO: Think about a separate button for viewing and download

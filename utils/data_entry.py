@@ -196,3 +196,7 @@ def write_CSV(file_path: str, tree) -> None:
         for row_id in tree.get_children():
             row = tree.item(row_id)['values']
             writer.writerow(row)
+
+def get_df_csv(csv_path: str) -> pd.DataFrame:
+    df = pd.read_csv(csv_path)
+    return df

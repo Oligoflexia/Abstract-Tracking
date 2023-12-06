@@ -1,15 +1,39 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog
+from os import path
+from pandas import DataFrame
+
 from .. import SecondaryWindow
+from utils import get_df_csv
 
 
 class CSVEntry(SecondaryWindow):
     from .. import MainApplication
 
     def __init__(self: "CSVEntry", parent: MainApplication) -> None:
+        self.df = self.init_df()
         super().__init__(parent)
+        self.parent = parent
+        self.frames = {}
+        self.conn = self.parent.get_conn()
+        self.cursor = self.parent.get_cursor()
         self.title("CSV Record Import Tool")
         self.create_window_elements()
+        self.init_conferences()
+
+    def init_df(self: "CSVEntry") -> DataFrame:
+        global CSV_DATA
+        filename = ""
+        filetypes = [
+            ("New Excel", "*.xlsx"),
+            ("Old Excel", "*.xls"),
+            ("Comma Separated Values (CSV)", "*.csv")
+         ]
+        filename = filedialog.askopenfilename(
+            initialdir=path.abspath(path.join("data", "raw")),
+            filetypes=filetypes
+         )
+        return get_df_csv(filename)
 
     def create_window_elements(self: "CSVEntry") -> None:
         # root
@@ -48,3 +72,14 @@ class CSVEntry(SecondaryWindow):
         self.attendences = attendences_label
         attendences_label.grid(row=0, column=5)
 
+    def init_conferences(self: "CSVEntry") -> None:
+        from .conferences_frame import Conferences
+
+        conf_frame = Conferences(self.main_content, self)
+        self.frames[Conferences] = conf_frame
+        conf_frame.grid(row=0, column=0)
+        self.show_frame(conf_frame)
+
+    def show_frame(self, content) -> None:
+        frame = self.frames[content]
+        frame.tkraise()
