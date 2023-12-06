@@ -26,6 +26,7 @@ Eventually:
 - [ ] automated back-ups of database
 - [ ] app deployment (Docker?)
 - [ ] function to spit db -> CSV
+- [ ] consider moving utils, config, data, docs into app module
 
 - [ ] Documentation
     - [ ] public SQLExplorer
