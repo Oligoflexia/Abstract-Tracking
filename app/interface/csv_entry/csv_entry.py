@@ -76,9 +76,9 @@ class CSVEntry(SecondaryWindow):
         from .conferences_frame import Conferences
 
         conf_frame = Conferences(self.main_content, self)
-        self.frames[Conferences] = conf_frame
+        self.frames["Conferences"] = conf_frame
         conf_frame.grid(row=0, column=0)
-        self.show_frame(conf_frame)
+        self.show_frame("Conferences")
 
     def show_frame(self, content) -> None:
         frame = self.frames[content]
