@@ -11,6 +11,7 @@ Project Critical:
     - [ ] (CSVEntry) window resizing to conferences table (or scrollbar)
     - [ ] (CSVEntry) AttributeError if opening app without DB selected
     - [ ] (CSVEntry) ValueError if opening app without spreadsheet selected
+    - [ ] (CSVEntry) Selecting a conference exits out the main application
 
 - [ ] (CSV Entry) first author handling on abstract CSV record entry
 - [ ] (CSV Entry) CSV sanity checks
@@ -37,6 +38,7 @@ Eventually:
     - [ ] public Application
     - [ ] internal Docstrings
     - [ ] review dependencies / backwards compatability
+    - [ ] Figure out the proper standard for .pyi type hints
 
 - [ ] Formatting / Refactoring
     - [ ] PEP8 Compliance
@@ -48,3 +50,4 @@ Time Permitting:
     - [ ] button icons
     - [ ] ttkbootstrap themes?
     - [ ] banner legibility on different OS
+    - [ ] considtent padding
