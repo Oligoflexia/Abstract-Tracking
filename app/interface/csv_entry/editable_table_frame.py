@@ -1,3 +1,8 @@
+import tkinter as tk
+from tkinter import ttk
+import pandas as pd
+
+
 class EditableTable(ttk.Frame):
     def __init__(self, parent, controller, df: pd.DataFrame) -> None:
         super().__init__(parent)

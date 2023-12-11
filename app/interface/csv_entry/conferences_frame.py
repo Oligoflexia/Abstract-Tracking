@@ -98,7 +98,7 @@ class Conferences(ttk.Frame):
 
         # buttons
         submit_button = ttk.Button(
-            input_frame, text="Create Record", command=self.submit
+            input_frame, text="Create Record", command=self.submit_new_conference
          )
         submit_button.grid(
             row=5, column=0, columnspan=2, sticky="ew", padx=10, pady=(35, 0)
@@ -114,7 +114,7 @@ class Conferences(ttk.Frame):
         tree = ttk.Treeview(self, columns=(1, 2, 3, 4, 5, 6), show="headings")
         self.tree = tree
 
-        tree.grid(row=6, sticky="nesw", padx=10, pady=(0, 10))
+        tree.grid(row=6, sticky="nesw", padx=(10, 0), pady=(0, 10), columnspan=2)
 
         tree.heading(1, text="ID")
         tree.column(1, width=30, stretch=tk.NO)
@@ -128,7 +128,13 @@ class Conferences(ttk.Frame):
         tree.column(5, width=125, stretch=tk.NO)
         tree.heading(6, text="Organizer")
         tree.column(6, width=175, stretch=tk.YES)
-        tree.bind("<Button-1>", self.on_treeview_click)
+
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=tree.yview)
+        scrollbar.grid(row=6, column=2, sticky="nse", pady=(0, 10), padx=(0, 10))
+        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        submit_button = ttk.Button(self, text="Submit", command=self.submit)
+        submit_button.grid(row=7, column=1, sticky="se", padx=(0, 10), pady=(0, 10), columnspan=2)
 
     def configure_layout(self: "Conferences") -> None:
         self.rowconfigure(0, weight=0)
@@ -138,6 +144,7 @@ class Conferences(ttk.Frame):
         self.rowconfigure(4, weight=0)
         self.rowconfigure(5, weight=0)
         self.rowconfigure(6, weight=1)
+        self.rowconfigure(7, weight=0)
 
         self.columnconfigure(0, weight=1)
 
@@ -149,25 +156,12 @@ class Conferences(ttk.Frame):
             self.input.grid()
             self.toggle.configure(text="Hide")
 
-    def on_treeview_click(self: "Conferences", event: tk.Event) -> str:
-        conference_id = ""
-        region = self.tree.identify("region", event.x, event.y)
-        if region == "cell":
-            row_id = self.tree.identify_row(event.y)
-            row_item = self.tree.item(row_id)
-            conference_id = row_item["values"][0]
-
-            if self.prompt_box(row_item["values"][1]):
-                self.quit()
-
-        return conference_id
-
     def prompt_box(self: "Conferences", name: str) -> bool:
         string = f"Are you sure you want to link new CSV records with:\n{name}"
         response = messagebox.askyesno("Confirm Selection", string)
         return response
 
-    def submit(self: "Conferences") -> None:
+    def submit_new_conference(self: "Conferences") -> None:
         name = self.name_entry.get()
         if name == "":
             error_box("Conference must have a name!")
@@ -215,3 +209,9 @@ class Conferences(ttk.Frame):
         self.tree.delete(*self.tree.get_children())
         for row in rows:
             self.tree.insert("", "end", values=row)
+
+    def submit(self):
+        conf_name = self.tree.item(self.tree.selection()[0])["values"][1]
+
+        if self.prompt_box(conf_name):
+            self.quit()

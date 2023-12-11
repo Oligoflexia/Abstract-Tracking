@@ -12,6 +12,7 @@ Project Critical:
     - [ ] (CSVEntry) AttributeError if opening app without DB selected
     - [ ] (CSVEntry) ValueError if opening app without spreadsheet selected
     - [ ] (CSVEntry) Selecting a conference exits out the main application
+    - [ ] (CSVEntry) Add a scrollbar to Conferences table
 
 - [ ] (CSV Entry) first author handling on abstract CSV record entry
 - [ ] (CSV Entry) CSV sanity checks
