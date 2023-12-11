@@ -14,13 +14,12 @@ class CSVEntry(SecondaryWindow):
         self.df = self.init_df()
         super().__init__(parent)
         self.parent = parent
-        self.frames = {}
         self.conn = self.parent.get_conn()
         self.cursor = self.parent.get_cursor()
         self.title("CSV Record Import Tool")
         self.create_window_elements()
         self.configure_layout()
-        self.init_conferences()
+        self.init_frames()
 
     def init_df(self: "CSVEntry") -> DataFrame:
         global CSV_DATA
@@ -41,6 +40,7 @@ class CSVEntry(SecondaryWindow):
         main_content_frame = ttk.Frame(self)
         self.main_content = main_content_frame
         main_content_frame.grid(row=1, column=0, sticky="nsew")
+
 
         # step_banner
         conference_label = ttk.Label(self.step_banner, text="1. Conferences")
@@ -84,14 +84,43 @@ class CSVEntry(SecondaryWindow):
         self.main_content.rowconfigure(0, weight=1)
         self.main_content.columnconfigure(0, weight=1)
 
+    def submit(self, string):
+        self.show_frame(string)
+
+    def show_frame(self, content) -> None:
+        frame = self.frames[content]
+        frame.tkraise()
+
+    def init_frames(self):
+        self.frames = {}
+
+        self.init_conferences()
+        self.init_people()
+        self.init_abstracts()
+        self.init_submissions()
+
+        self.show_frame("Conferences")
+
     def init_conferences(self: "CSVEntry") -> None:
         from .conferences_frame import Conferences
 
         conf_frame = Conferences(self.main_content, self)
         self.frames["Conferences"] = conf_frame
         conf_frame.grid(row=0, column=0, sticky="nsew")
-        self.show_frame("Conferences")
 
-    def show_frame(self, content) -> None:
-        frame = self.frames[content]
-        frame.tkraise()
+    def init_people(self) -> None:
+        from .people_frames import People
+        people_frame = People(self.main_content, self)
+        self.frames["People"] = people_frame
+        people_frame.grid(row=0, column=0, sticky="nsew")
+
+    def init_abstracts(self) -> None:
+        from .editable_table_frame import EditableTable
+        x_offset = self.main_content.winfo_x()
+        y_offset = self.main_content.winfo_y()
+        abstracts_frame = EditableTable(self.main_content, self, self.df, "Submissions", parent_x=x_offset, parent_y=y_offset)
+        self.frames["Abstracts"] = abstracts_frame
+        abstracts_frame.grid(row=0, column=0, sticky="nsew")
+
+    def init_submissions(self) -> None:
+        pass

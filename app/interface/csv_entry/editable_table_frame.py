@@ -4,9 +4,14 @@ import pandas as pd
 
 
 class EditableTable(ttk.Frame):
-    def __init__(self, parent, controller, df: pd.DataFrame) -> None:
+    def __init__(self, parent, controller, df: pd.DataFrame, next_frame: str, parent_x: int = 0, parent_y: int = 0) -> None:
         super().__init__(parent)
         self.df = df
+        self.controller = controller
+        self.next = next_frame
+        self.parent_x = parent_x
+        self.parent_y = parent_y
+
         self.create_window_elements()
         self.configure_layout()
         self.entryPopup = None
@@ -57,7 +62,7 @@ class EditableTable(ttk.Frame):
         ttk.Button(
             master=self.main_content,
             text="Submit",
-            command=lambda: print("Working!")
+            command=lambda: self.controller.submit(self.next)
          ).grid(row=3, column=0, sticky="se", padx=(0, 15), pady=(0, 15))
 
     def configure_layout(self) -> None:
@@ -83,11 +88,13 @@ class EditableTable(ttk.Frame):
         assert (isinstance(width, int))
         assert (isinstance(height, int))
 
-        tree_y = self.table_content.winfo_y()
+        tree_y = self.parent_y
+        tree_y += self.table_content.winfo_y()
         tree_y += self.table.winfo_y()
         tree_y += y
 
-        tree_x = self.table_content.winfo_x()
+        tree_x = self.parent_x
+        tree_x += self.table_content.winfo_x()
         tree_x += self.table.winfo_x()
         tree_x += x
 

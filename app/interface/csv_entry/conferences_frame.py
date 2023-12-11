@@ -211,7 +211,8 @@ class Conferences(ttk.Frame):
             self.tree.insert("", "end", values=row)
 
     def submit(self):
-        conf_name = self.tree.item(self.tree.selection()[0])["values"][1]
+        row_item = self.tree.item(self.tree.selection()[0])["values"]
 
-        if self.prompt_box(conf_name):
-            self.quit()
+        if self.prompt_box(row_item[1]):
+            self.controller.show_frame("People")
+            return row_item[0]

@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+import pandas as pd
 
 
 class People(ttk.Frame):
@@ -8,32 +9,52 @@ class People(ttk.Frame):
     def __init__(
         self: "People", parent: ttk.Frame, controller: CSVEntry
      ) -> None:
-        super().__init__()
+        super().__init__(parent)
+        self.parent = parent
+        self.controller = controller
         self.create_window_elements()
         self.configure_layout()
+        self.init_people_errors()
 
     def create_window_elements(self: "People") -> None:
         main_content_frame = ttk.Frame(self)
         self.main_content = main_content_frame
 
-        main_content_frame.pack()
+        main_content_frame.grid(row=0, sticky="nsew")
 
     def configure_layout(self: "People") -> None:
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
 
+        self.main_content.rowconfigure(0, weight=1)
+        self.main_content.columnconfigure(0, weight=1)
+
+    def init_people_errors(self) -> None:
+        PeopleErrors(self.main_content, self).grid(row=0, sticky="nsew")
+
+    def raise_edit_table(self):
+        df = pd.DataFrame([["Souvik Maiti"], ["something else"], ["I just don't want it to crash man"]])
+        from .editable_table_frame import EditableTable
+        x_offset = self.controller.main_content.winfo_x()
+        y_offset = self.controller.main_content.winfo_y()
+        print(x_offset, y_offset)
+        frame = EditableTable(self.main_content, self, df, "Abstracts", x_offset, y_offset)
+        frame.grid(row=0, sticky="nsew")
+        frame.tkraise()
+
+    def submit(self, frame_name: str):
+        self.controller.show_frame(frame_name)
 
 class PeopleErrors(ttk.Frame):
     def __init__(
-        self: "PeopleErrors", parent: ttk.Frame, controller: tk.Tk
+        self: "PeopleErrors", parent: ttk.Frame, controller: People
      ) -> None:
         super().__init__(parent)
+        self.controller = controller
         self.create_window_elements()
         self.configure_layout()
 
     def create_window_elements(self: "PeopleErrors") -> None:
-        global sample_names
-
         main_content_frame = ttk.Frame(self)
         self.main_content = main_content_frame
         self.main_content.grid(row=0, column=0, sticky="nsew")
@@ -69,7 +90,8 @@ class PeopleErrors(ttk.Frame):
         self.name_table.grid(row=0, column=0, sticky="nsew")
 
         # TODO: Implement actual logic to deliver improper names here
-        for index, row in enumerate(sample_names, start=1):
+        names = self.controller.controller.df
+        for index, row in enumerate(names, start=1):
             name_table.insert("", "end", values=(index, row[0]))
 
         scrollbar = ttk.Scrollbar(error_content_frame, orient="vertical", command=name_table.yview)
@@ -124,11 +146,13 @@ class PeopleErrors(ttk.Frame):
         print(type(self.name_table.selection()))
         print(self.name_table.selection())
         self.update_table(self.name_table.selection())
-        print(self.is_empty())
+
+        if self.is_empty():
+            self.controller.raise_edit_table()
 
     def update_table(
         self: "PeopleErrors",
-        selections: Tuple[str, ...]
+        selections: tuple[str, ...]
      ) -> None:
 
         self.name_table.delete(*selections)
